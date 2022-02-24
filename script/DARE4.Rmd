@@ -41,7 +41,12 @@ ggplot(raw_diff, aes(x=as.factor(elprgm), y=mean_lang, ymin=mean_lang-se_lang, y
 **A2** Are there other ways in which students classified as EL learners are different from other students who live in homes where a language other than English is predominantly spoken, but are not classified as ELs? Present a table with quantitative information summarizing this fact and describe how this motivates your analytic strategy in Section B in 3-4 sentences.
 
 ```{r}
-
+table <- tableby(elprgm ~ race + ses + chrabsk + prelas + ebrs + female + rural, 
+                 numeric.stats=
+                   c("meansd"), cat.stats=c("N", "countpct"), digits=2, data=dat)
+mylabels <- list(faminc8 = "", 
+                 math8 = "")
+summary(table, labelTranslations = mylabels)
 ```
 
 ### B. Replication and Extension (7 points)
