@@ -75,7 +75,22 @@ ggplot(pscore_df, aes(p_score,fill = as.factor(elprgm), color = as.factor(elprgm
 **B2.** Construct a Coarsened Exact Matching (CEM) algorithm similar to Umansky and Dumont (see Class 8 Lecture) that relies on the following matching variables: (1) prelas, (2) ebrs, (3) kmath, (4) kread, (5) ses, (6) rural, (7) female and (8) hisp. Variables 1-5 are continuous. You should decide whether you will follow Umansky and Dumont’s choices for cutpoints or select other reasonable cutpoint values. Vari- ables 6-8 are dichomotous and you should insist on exact matches for these categories. Write 1-2 paragraphs describing the identification strategy (remember this is different from your estimation strategy), its accompanying assumptions, your matching procedures and the re- sulting number of excluded sample members.
 
 ```{r}
+matched <- matchit(elprgm ~ prelas + ebrs + ses + rural + female + hisp, method="nearest", replace=T, 
+                   discard="both", data=dat)
 
+# Create dataframe from matched data
+df_match <- match.data(matched)
+
+# Dimensions of dataframe
+dim(df_match)
+
+ggplot(df_match, aes(distance, fill = as.factor(elprgm), color = as.factor(elprgm))) + 
+        geom_density(alpha=0.1) + 
+        theme_pander(base_size = 16) + 
+        xlab("Probability of elprgm")
+
+## 3. Examine quality of matches, descriptively
+summary(matched)
 ```
 
 **B3.** Assess the quality of your matches by looking at the region of common support in your newly matched sample. Assess the quality of your matches by comparing baseline variable values in the treated and non- treated conditions. Provide a summary assessment of the quality of your matches, the extent to which you have accomplished balance, and the impact your matching has had on your sample as it relates to both variance and generalizability. Do you think you should try different matching criteria to achieve a better result? Why or why not (it is not necessary at this point to actually conduct multiple re-matching procedures, just assess whether they would be valuable)?
