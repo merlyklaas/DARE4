@@ -56,7 +56,20 @@ summary(table, labelTranslations = mylabels)
 **B1.** Develop a formal model (an equation) that describes the probability that a student who lives in a home where a language other than En- glish is predominantly spoken will be identified as an EL. Start with a basic model that defines EL-classification as a function of PreLAS score, EBRS score, Math/reading scores, SES, Rurality, Gender and Ethnicity (Hispanic/Latinx or not). From this starting probability, present a visual describing the region of common support for EL- and non-EL-classified students. Describe the substantive implications to your analytic strategy of this figure in 2-3 sentences.
 
 ```{r}
+pscores <- feglm(elprgm ~ prelas + ebrs + kread + kmath + female + rural + hisp, family=c("logit"), data=dat)
+summary(pscores)
 
+# 2. Estimate fitted probability of selection into treatment for each individual
+pscore_df <- data.frame(p_score = predict(pscores, type = "response"),
+                        elprgm = dat$elprgm)
+head(pscore_df)
+
+# 3. Examine common support
+
+ggplot(pscore_df, aes(p_score,fill = as.factor(elprgm), color = as.factor(elprgm))) + 
+  geom_density(alpha=0.1) + 
+  theme_pander(base_size = 12) + 
+  xlab("Probability of elprgm")
 ```
 
 **B2.** Construct a Coarsened Exact Matching (CEM) algorithm similar to Umansky and Dumont (see Class 8 Lecture) that relies on the following matching variables: (1) prelas, (2) ebrs, (3) kmath, (4) kread, (5) ses, (6) rural, (7) female and (8) hisp. Variables 1-5 are continuous. You should decide whether you will follow Umansky and Dumont’s choices for cutpoints or select other reasonable cutpoint values. Vari- ables 6-8 are dichomotous and you should insist on exact matches for these categories. Write 1-2 paragraphs describing the identification strategy (remember this is different from your estimation strategy), its accompanying assumptions, your matching procedures and the re- sulting number of excluded sample members.
