@@ -2,7 +2,9 @@
 title: "DARE4"
 author: "Anwesha Guha, Merly Klaas, & Thuy Nguyen"
 date: "2/22/2022"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
