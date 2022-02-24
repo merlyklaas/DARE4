@@ -8,7 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-pacman::p_load(here, tidyverse, DT, ggplot2, xaringan, knitr, kableExtra, modelsummary, stargazer, xaringanthemer, gganimate, ggthemes, fixest, haven, arsenal, MatchIt, gtools)
+pacman::p_load(rio, here, tidyverse, DT, ggplot2, xaringan, knitr, kableExtra, modelsummary, stargazer, xaringanthemer, gganimate, ggthemes, fixest, haven, arsenal, MatchIt, gtools)
 
 ```
 
@@ -22,8 +22,21 @@ dat <- import(here("data","dumont_umansky_ECLSK.dta"))
 **A1** Present graphical and/or numerical evidence on whether teachers per- ceive students who are classified as ELs as having weaker language and mathematics skills in this data set. Describe the results of your assessment in 3-4 sentences. Should the evidence you have shared here be interpreted as a plausibly causal estimate of the effect of being clas- sified as an EL student on teachers’ perceptions of students’ ability? In 1-2 sentences, answer why or why not.
 
 ```{r}
+raw_diff <- dat %>% group_by(elprgm) %>% 
+  summarise(n_students = n(), mean_math=mean(tmathk), se_math = sd(tmathk)/sqrt(n_students),
+            mean_lang = mean(tlangk), se_lang = sd(tlangk)/sqrt(n_students))
 
+ggplot(raw_diff, aes(x=as.factor(elprgm), y=mean_math, ymin=mean_math-se_math, ymax=mean_math+se_math)) + geom_col(fill = "darkgreen", alpha=0.4) + 
+  geom_linerange() + theme_pander(base_size = 16) +
+  xlab("English learner program") + scale_y_continuous("Teacher perceptions of student's\n kinder math skills")
 ```
+
+```{r}
+ggplot(raw_diff, aes(x=as.factor(elprgm), y=mean_lang, ymin=mean_lang-se_lang, ymax=mean_lang+se_lang)) + geom_col(fill = "blue", alpha=0.4) + 
+  geom_linerange() + theme_pander(base_size = 16) +
+  xlab("English learner program") + scale_y_continuous("Teacher perceptions of student's kinder\n language skills")
+```
+
 
 **A2** Are there other ways in which students classified as EL learners are different from other students who live in homes where a language other than English is predominantly spoken, but are not classified as ELs? Present a table with quantitative information summarizing this fact and describe how this motivates your analytic strategy in Section B in 3-4 sentences.
 
