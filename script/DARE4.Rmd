@@ -140,14 +140,15 @@ confint(psmatch)
 # Create coarsened forPreLAS variable
 prelas_quints <- quantcut(dat$prelas, 5)
 table(prelas_quints)
+
 #Create coarsened for EBRS
 ebrs_quints <- quantcut(dat$ebrs, 5)
 table(ebrs_quints)
 
-#Cutpoint halve for executive function
+# Median Cut-point for executive function
 summary(dat$kexecfunc1) #median = 15
-#Create coarsened for SES 
 
+#Create coarsened for SES 
 ses_quints <- quantcut(dat$ses, 5)
 table(ses_quints)
 
@@ -177,7 +178,14 @@ summary(cem)
 **B4.** Using your newly matched sample, estimate the average treatment effect of EL classification on teachers’ perceptions of students’ math and language ability in your newly matched sample. If you decide to do B5, present these results and associated discussion along with the rest of your results in B5. If you do not, answer the rest of the prompt with just the CEM results. Present your CEM results and compare them to your results in A1 in a table and an accompanying write-up as you would report these in an academic paper in 1-2 paragraphs.
 
 ```{r}
+#estimation for teacher perception on language skills
+att1 <- lm(tlangk ~ elprgm + prelas + ebrs+ ses+ kexecfunc1 + rural + female + hisp, data=df_cem, weights = weights)
 
+#estimation for teacher perception on math skills
+att2 <- lm(tmathk ~ elprgm + prelas + ebrs + ses + kexecfunc1 + rural + female + hisp, data=df_cem, weights = weights)
+
+summary(att1)
+summary(att2)
 ```
 
 
