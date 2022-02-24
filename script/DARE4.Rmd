@@ -42,9 +42,6 @@ math_perception <- dat %>%
             mean_tmathk = mean(tmathk), 
             se_tmathk = sd(tmathk)/sqrt(n_students))
 math_perception
-raw_diff <- dat %>% group_by(elprgm) %>% 
-  summarise(n_students = n(), mean_math=mean(tmathk), se_math = sd(tmathk)/sqrt(n_students),
-            mean_lang = mean(tlangk), se_lang = sd(tlangk)/sqrt(n_students))
 
 lang_perception <- dat %>% 
   group_by(elprgm) %>% 
@@ -52,6 +49,13 @@ lang_perception <- dat %>%
             mean_tlangk = mean(tlangk), 
             se_tlangk = sd(tlangk)/sqrt(n_students))
 lang_perception
+```
+
+```{r}
+raw_diff <- dat %>% group_by(elprgm) %>% 
+  summarise(n_students = n(), mean_math=mean(tmathk), se_math = sd(tmathk)/sqrt(n_students),
+            mean_lang = mean(tlangk), se_lang = sd(tlangk)/sqrt(n_students))
+
 ggplot(raw_diff, aes(x=as.factor(elprgm), y=mean_math, ymin=mean_math-se_math, ymax=mean_math+se_math)) + geom_col(fill = "darkgreen", alpha=0.4) + 
   geom_linerange() + theme_pander(base_size = 16) +
   xlab("English learner program") + scale_y_continuous("Teacher perceptions of student's\n kinder math skills")
@@ -91,22 +95,11 @@ ggplot(raw_diff, aes(x=as.factor(elprgm), y=mean_lang, ymin=mean_lang-se_lang, y
 **A2** Are there other ways in which students classified as EL learners are different from other students who live in homes where a language other than English is predominantly spoken, but are not classified as ELs? Present a table with quantitative information summarizing this fact and describe how this motivates your analytic strategy in Section B in 3-4 sentences.
 
 ```{r}
-table <- tableby(elprgm ~ race + ses + chrabsk + prelas + ebrs + female + rural, 
-                 numeric.stats=
-                   c("meansd"), cat.stats=c("N", "countpct"), digits=2, data=dat)
-mylabels <- list(faminc8 = "", 
-                 math8 = "")
-summary(table, labelTranslations = mylabels)
-### Fit bivariate regression
-ols1 <- lm(math12 ~ catholic, data=catholic)
-summary(ols1)
+table_diff <- tableby(elprgm ~ hisp + ses + chrabsk + prelas + ebrs + female + rural, 
+                 numeric.stats= c("meansd"), cat.stats=c("N", "countpct"), digits=2, data=dat)
 
-## Table document differences across Catholic school attendees and non
-table <- tableby(catholic ~ faminc8 + math8 + white + female, numeric.stats=
-                   c("meansd"), cat.stats=c("N", "countpct"), digits=2, data=catholic)
-mylabels <- list(faminc8 = "Family income level in 8th grade", 
-                 math8 = "8th grade math score")
-summary(table, labelTranslations = mylabels)
+summary(table_diff)
+
 ```
 
 ### B. Replication and Extension (7 points)
