@@ -36,63 +36,30 @@ dat <- import(here("data","dumont_umansky_ECLSK.dta"))
 
 **A1** Present graphical and/or numerical evidence on whether teachers perceive students who are classified as ELs as having weaker language and mathematics skills in this data set. Describe the results of your assessment in 3-4 sentences. Should the evidence you have shared here be interpreted as a plausibly causal estimate of the effect of being classified as an EL student on teachers’ perceptions of students’ ability? In 1-2 sentences, answer why or why not.
 
-```{r}
-# Construct a descriptive table of outcomes across groups
-math_perception <- dat %>% 
-  group_by(elprgm) %>%
-  summarise(n_students = n(),
-            mean_tmathk = mean(tmathk), 
-            se_tmathk = sd(tmathk)/sqrt(n_students))
-math_perception
-
-lang_perception <- dat %>% 
-  group_by(elprgm) %>% 
-  summarise(n_students = n(),
-            mean_tlangk = mean(tlangk), 
-            se_tlangk = sd(tlangk)/sqrt(n_students))
-lang_perception
-```
 
 ```{r}
-raw_diff <- dat %>% group_by(elprgm) %>% 
-  summarise(n_students = n(), mean_math=mean(tmathk), se_math = sd(tmathk)/sqrt(n_students),
-            mean_lang = mean(tlangk), se_lang = sd(tlangk)/sqrt(n_students))
+perception_diff <- dat %>% group_by(elprgm) %>% 
+  summarise(n_students = n(), 
+            mean_math=mean(tmathk), 
+            se_math = sd(tmathk)/sqrt(n_students),
+            mean_lang = mean(tlangk), 
+            se_lang = sd(tlangk)/sqrt(n_students))
 
-ggplot(raw_diff, aes(x=as.factor(elprgm), y=mean_math, ymin=mean_math-se_math, ymax=mean_math+se_math)) + geom_col(fill = "darkgreen", alpha=0.4) + 
-  geom_linerange() + theme_pander(base_size = 16) +
-  xlab("English learner program") + scale_y_continuous("Teacher perceptions of student's\n kinder math skills")
-```
-
-```{r}
-## Then plot
-math_perception %>% 
-  ggplot(aes(x=as.factor(elprgm), y=mean_tmathk, ymin=mean_tmathk-se_tmathk, ymax=mean_tmathk+se_tmathk)) + 
-  geom_col(fill=red_pink, alpha=0.4) + 
+ggplot(perception_diff, 
+       aes(x=as.factor(elprgm), y=mean_math, ymin=mean_math-se_math, ymax=mean_math+se_math)) + geom_col(fill = "darkgreen", alpha=0.4) + 
   geom_linerange() + 
   theme_pander(base_size = 16) +
-  xlab("EL Classification") + 
-  scale_y_continuous("Perception of Math Skills") +
-  theme_minimal()
+  xlab("ELL Program Participation") + scale_y_continuous("Teacher perceptions of student's\n kinder math skills")
 ```
 
 ```{r}
-## Then plot
-lang_perception %>% 
-  ggplot(aes(x=as.factor(elprgm), y=mean_tlangk, ymin=mean_tlangk-se_tlangk, ymax=mean_tlangk+se_tlangk)) + 
-  geom_col(fill=red_pink, alpha=0.4) + 
+ggplot(perception_diff,
+       aes(x=as.factor(elprgm), y=mean_lang, ymin=mean_lang-se_lang, ymax=mean_lang+se_lang)) + geom_col(fill = "blue", alpha=0.4) + 
   geom_linerange() + 
   theme_pander(base_size = 16) +
-  xlab("EL Classification") + 
-  scale_y_continuous("Perception of Language Skills") +
-  theme_minimal()
+  xlab("ELL Program Participation") + 
+  scale_y_continuous("Teacher perceptions of student's kinder\n language skills")
 ```
-
-```{r}
-ggplot(raw_diff, aes(x=as.factor(elprgm), y=mean_lang, ymin=mean_lang-se_lang, ymax=mean_lang+se_lang)) + geom_col(fill = "blue", alpha=0.4) + 
-  geom_linerange() + theme_pander(base_size = 16) +
-  xlab("English learner program") + scale_y_continuous("Teacher perceptions of student's kinder\n language skills")
-```
-
 
 **A2** Are there other ways in which students classified as EL learners are different from other students who live in homes where a language other than English is predominantly spoken, but are not classified as ELs? Present a table with quantitative information summarizing this fact and describe how this motivates your analytic strategy in Section B in 3-4 sentences.
 
@@ -102,7 +69,11 @@ table_diff <- tableby(elprgm ~ hisp + ses + chrabsk + prelas + ebrs + female + r
 
 summary(table_diff)
 
+# students in program stat different from students who are not except for chronically absent and gender
+# match based on these other covariates and to be able to parse the differences in perception
+# otherwise students are inherently different and cannot be compared without matching based on ability 
 ```
+
 
 ### B. Replication and Extension (7 points)
 *For the following tasks, give your best attempt at completing the analysis. If you are unable to conduct the programming or analysis, describe what you are attempting to do and what your results would mean.*
@@ -111,161 +82,70 @@ summary(table_diff)
 **B1.** Develop a formal model (an equation) that describes the probability that a student who lives in a home where a language other than English is predominantly spoken will be identified as an EL. Start with a basic model that defines EL-classification as a function of PreLAS score, EBRS score, Math/reading scores, SES, Rurality, Gender and Ethnicity (Hispanic/Latinx or not). From this starting probability, present a visual describing the region of common support for EL- and non-EL-classified students. Describe the substantive implications to your analytic strategy of this figure in 2-3 sentences.
 
 ```{r}
-
-# 1. Fit logistic selection model estimating probability of attendance, given covariates
-
-pscores <- feglm(catholic ~ inc8 + math8 + mathfam, family=c("logit"), data=catholic)
+# 1. Fit logistic selection model estimating probability of participating in program, given covariates
+pscores <- feglm(elprgm ~ prelas + ebrs + kread + kmath + ses + rural + female + hisp, family=c("logit"), data=dat)
 summary(pscores)
 
 # 2. Estimate fitted probability of selection into treatment for each individual
 pscore_df <- data.frame(p_score = predict(pscores, type = "response"),
-                        catholic = catholic$catholic)
+                        elprgm = dat$elprgm)
 head(pscore_df)
 
 # 3. Examine common support
-
-ggplot(pscore_df, aes(p_score,fill = as.factor(catholic), color = as.factor(catholic))) + 
+ggplot(pscore_df, aes(p_score,fill = as.factor(elprgm), color = as.factor(elprgm))) + 
   geom_density(alpha=0.1) + 
   theme_pander(base_size = 12) + 
-  xlab("Probability of Catholic HS attendance")
+  xlab("Prop. of EL Program Participation")
 ```
 
 
 ```{r}
-
 # 1. Generate matches
-
-matched <- matchit(catholic ~ math8 + inc8, method="nearest", replace=T, 
-                   discard="both", data=catholic)
+matched <- matchit(elprgm ~ prelas + ebrs + kread + kmath + ses + rural + female + hisp, method="nearest", replace=T, 
+                   discard="both", data=dat)
 
 # Create dataframe from matched data
 df_match <- match.data(matched)
 
 # Dimensions of dataframe
-dim(df_match)
+dim(df_match) #compared to 2166 x 16
 
 ## 2. Examine common support (post-match)
-
-ggplot(df_match, aes(distance,fill = as.factor(catholic), color = as.factor(catholic))) + 
+ggplot(df_match, aes(distance,fill = as.factor(elprgm), color = as.factor(elprgm))) + 
         geom_density(alpha=0.1) + 
         theme_pander(base_size = 16) + 
-        xlab("Probability of Catholic HS attendance")
+        xlab("Prop. of EL Program Participation")
 
 ## 3. Examine quality of matches, descriptively
-summary(matched)
-
-# Note: Could get even closer with fuller model:
-matched2 <- matchit(catholic ~ math8 + inc8 + inc8sq + mathfam, 
-                    method="nearest", replace=T, 
-                    discard="both", data=catholic)
-
-df_match2 <- match.data(matched2)
-
-ggplot(df_match2, aes(distance, fill = as.factor(catholic), color = as.factor(catholic))) + 
-                  geom_density(alpha=0.1) + 
-                  theme_pander(base_size = 12) + 
-                  xlab("Probability of Catholic HS attendance")
+summary(matched) # see slide 29 to interpret quality of matches
 ```
 
+Extra exploration to estimate treatment effects:
 ```{r}
 ## 4. Once happy with matches, estimate treatment effect in matched sample
+psmatch <- lm(elprgm ~ prelas + ebrs + kread + kmath + ses + rural + female + hisp, data=df_match, weights=weights)
 
-psmatch2 <- lm(math12 ~ catholic + math8 + inc8 + inc8sq + mathfam, data=df_match, weights=weights)
-#Notice how we have matched on just math8 and inc8 but are now adjusting for more
-#in our estimation. This is fine!
-summary(psmatch2)
+summary(psmatch)
 
 # Estimate confidence intervals
-confint(psmatch2)
-
-# Can estimate this without additional controls or with full model match
-psmatch1 <- lm(math12 ~ catholic + math8 + inc8, data=df_match, weights=weights)
-psmatch3 <- lm(math12 ~ catholic + math8 + inc8 + inc8sq + mathfam, data=df_match2, weights = weights)
+confint(psmatch)
 ```
 
 **B2.** Construct a Coarsened Exact Matching (CEM) algorithm similar to Umansky and Dumont (see Class 8 Lecture) that relies on the following matching variables: (1) prelas, (2) ebrs, (3) kmath, (4) kread, (5) ses, (6) rural, (7) female and (8) hisp. Variables 1-5 are continuous. You should decide whether you will follow Umansky and Dumont’s choices for cutpoints or select other reasonable cutpoint values. Variables 6-8 are dichotomous and you should insist on exact matches for these categories. Write 1-2 paragraphs describing the identification strategy (remember this is different from your estimation strategy), its accompanying assumptions, your matching procedures and the resulting number of excluded sample members.
 
 ```{r}
-
-#### Step 1. Define coarsened bins of covariates within which to match
-
-# Create coarsened family income variable
-catholic <- mutate(catholic, coarse_inc=ifelse(faminc8 < 5, 1, faminc8))
-  catholic$coarse_inc <- as.ordered(catholic$coarse_inc)
-  levels(catholic$coarse_inc)
-
-# Same for 8th grade math score
-summary(catholic$math8)
-mathcuts <- c(43.45, 51.49, 58.55)
-
-#### Step 2. Define matching bins (could do this by hand)
-cem <- matchit(catholic ~ coarse_inc + math8, 
-               cutpoints=list(math8=mathcuts), method="cem", data = catholic)
-df_cem <- match.data(cem)
-
-# Have we dropped any? No
-table(df_cem$catholic)
-
-#### Step 3. Examine common support
-
-# Look at distribution across sub-groups as a proportion
-df_cem1 <- df_cem %>% group_by(catholic, subclass) %>% 
-  summarise(count= n())  
-df_cem1 <- df_cem1 %>%  mutate(attend = count / sum(count))
-
-# Plot common support
-ggplot(df_cem1, aes(subclass, attend, color=as.factor(catholic))) + 
-          geom_col(alpha=0.1, position = position_dodge()) + 
-          theme_pander(base_size = 10) + xlab("Subclassification groups by income and 8th grade score")
-
-# Examine quality of matches for each variable grouping
-summary(cem)
-
-### Could have different quantiles
-
-# For example, quintiles
-math8_quints <- quantcut(catholic$math8, 5)
-table(math8_quints)
-
-# You might also have a substantive reason for the cuts:
-mathcuts2 <- c(40, 45, 50, 55, 60, 65, 70)
-
-
-# Let's use the substantive match
-cem2 <- matchit(catholic ~ coarse_inc + math8, 
-                cutpoints=list(math8=mathcuts2),
-                method="cem", 
-                data=catholic)
-
-df_cem2 <- match.data(cem2)
-summary(cem2)
-
-# Plot common support
-df_cem3 <- df_cem2 %>% group_by(catholic, subclass) %>% 
-              summarise(count= n())  
-df_cem3 <- df_cem3 %>%  mutate(attend = count / sum(count))
-
-# Examine quality of matches for each variable grouping
-ggplot(df_cem3, aes(subclass, attend, color = as.factor(catholic))) + 
-          geom_col(alpha=0.1, position = position_dodge()) + 
-          theme_pander(base_size = 10) + 
-          xlab("Subclassification groups by income and 8th grade score")
-
-# Estimate
-att1 <- lm(math12 ~ catholic + coarse_inc + math8, data=df_cem, weights = weights)
-att2 <- lm(math12 ~ catholic + coarse_inc + math8, data=df_cem2, weights = weights)
-
-summary(att1)
-summary(att2)
-
-stargazer(ols1, psmatch1, psmatch2, psmatch3, att1, att2, 
-          type='html', omit.stat = c("ser", "adj.rsq", "f"), 
-          single.row=T, dep.var.caption="", 
-          dep.var.labels.include=F, omit=c("Constant", "coarse_inc", "math8", "inc8", "inc8sq", "mathfam"), 
-          covariate.labels=c("Attend catholic school"), notes.append=F,
-          star.cutoffs=c(0.05, 0.01, 0.001), notes.align="l", 
-          notes=c("*p<0.05; **p<0.01; ***p<0.001. Models 2-3 and 5-6 match on income and math score. Model 3 adjusts for higher-order terms and interactions post matching; Model 4 includes them in matching algorithm. Model 6 uses narrower bins to match than Model 5. All CEM and PSM estimates are doubly-robust."), 
-          model.names=F, column.labels = c("OLS", "PSM", "CEM"), column.separate = c(1, 3, 2))
+matched <- matchit(elprgm ~ prelas + ebrs + ses + rural + female + hisp, method="nearest", replace=T, 
+                   discard="both", data=dat)
+# Create dataframe from matched data
+df_match <- match.data(matched)
+# Dimensions of dataframe
+dim(df_match)
+ggplot(df_match, aes(distance, fill = as.factor(elprgm), color = as.factor(elprgm))) + 
+        geom_density(alpha=0.1) + 
+        theme_pander(base_size = 16) + 
+        xlab("Probability of elprgm")
+## 3. Examine quality of matches, descriptively
+summary(matched)
 ```
 
 **B3.** Assess the quality of your matches by looking at the region of common support in your newly matched sample. Assess the quality of your matches by comparing baseline variable values in the treated and non- treated conditions. Provide a summary assessment of the quality of your matches, the extent to which you have accomplished balance, and the impact your matching has had on your sample as it relates to both variance and generalizability. Do you think you should try different matching criteria to achieve a better result? Why or why not (it is not necessary at this point to actually conduct multiple re-matching procedures, just assess whether they would be valuable)?
@@ -278,6 +158,7 @@ stargazer(ols1, psmatch1, psmatch2, psmatch3, att1, att2,
 ```{r}
 
 ```
+
 
 **B5.** (OPTIONAL) Conduct a robustness check by estimating the causal effect of EL classification on teacher perceptions of student skills by using a propensity score matching approach (or another approach from the matching family if you choose). Share information on the quality of these matches and any additional assumptions associated with this approach. Present these results alongside your results in B4 in an accompanying table(s) and write-up as you would report these in an academic paper in 2-3 paragraphs.
 
