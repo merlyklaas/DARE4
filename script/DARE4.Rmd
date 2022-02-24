@@ -99,7 +99,6 @@ table_diff <- tableby(elprgm ~ hisp + ses + chrabsk + prelas + ebrs + female + r
                  numeric.stats= c("meansd"), cat.stats=c("N", "countpct"), digits=2, data=dat)
 
 summary(table_diff)
-
 ```
 
 ### B. Replication and Extension (7 points)
@@ -109,32 +108,27 @@ summary(table_diff)
 **B1.** Develop a formal model (an equation) that describes the probability that a student who lives in a home where a language other than English is predominantly spoken will be identified as an EL. Start with a basic model that defines EL-classification as a function of PreLAS score, EBRS score, Math/reading scores, SES, Rurality, Gender and Ethnicity (Hispanic/Latinx or not). From this starting probability, present a visual describing the region of common support for EL- and non-EL-classified students. Describe the substantive implications to your analytic strategy of this figure in 2-3 sentences.
 
 ```{r}
-
-# 1. Fit logistic selection model estimating probability of attendance, given covariates
-
-pscores <- feglm(catholic ~ inc8 + math8 + mathfam, family=c("logit"), data=catholic)
+# 1. Fit logistic selection model estimating probability of participating in program, given covariates
+pscores <- feglm(elprgm ~ prelas + ebrs + kread + kmath + ses + rural + female + hisp, family=c("logit"), data=dat)
 summary(pscores)
 
 # 2. Estimate fitted probability of selection into treatment for each individual
 pscore_df <- data.frame(p_score = predict(pscores, type = "response"),
-                        catholic = catholic$catholic)
+                        elprgm = dat$elprgm)
 head(pscore_df)
 
 # 3. Examine common support
-
-ggplot(pscore_df, aes(p_score,fill = as.factor(catholic), color = as.factor(catholic))) + 
+ggplot(pscore_df, aes(p_score,fill = as.factor(elprgm), color = as.factor(elprgm))) + 
   geom_density(alpha=0.1) + 
   theme_pander(base_size = 12) + 
-  xlab("Probability of Catholic HS attendance")
+  xlab("Prop. of EL Program Participation")
 ```
 
 
 ```{r}
-
 # 1. Generate matches
-
-matched <- matchit(catholic ~ math8 + inc8, method="nearest", replace=T, 
-                   discard="both", data=catholic)
+matched <- matchit(elprgm ~ prelas + ebrs + kread + kmath + ses + rural + female + hisp, method="nearest", replace=T, 
+                   discard="both", data=dat)
 
 # Create dataframe from matched data
 df_match <- match.data(matched)
@@ -143,42 +137,23 @@ df_match <- match.data(matched)
 dim(df_match)
 
 ## 2. Examine common support (post-match)
-
-ggplot(df_match, aes(distance,fill = as.factor(catholic), color = as.factor(catholic))) + 
+ggplot(df_match, aes(distance,fill = as.factor(elprgm), color = as.factor(elprgm))) + 
         geom_density(alpha=0.1) + 
         theme_pander(base_size = 16) + 
-        xlab("Probability of Catholic HS attendance")
+        xlab("Prop. of EL Program Participation")
 
 ## 3. Examine quality of matches, descriptively
 summary(matched)
-
-# Note: Could get even closer with fuller model:
-matched2 <- matchit(catholic ~ math8 + inc8 + inc8sq + mathfam, 
-                    method="nearest", replace=T, 
-                    discard="both", data=catholic)
-
-df_match2 <- match.data(matched2)
-
-ggplot(df_match2, aes(distance, fill = as.factor(catholic), color = as.factor(catholic))) + 
-                  geom_density(alpha=0.1) + 
-                  theme_pander(base_size = 12) + 
-                  xlab("Probability of Catholic HS attendance")
 ```
 
 ```{r}
 ## 4. Once happy with matches, estimate treatment effect in matched sample
+psmatch <- lm(elprgm ~ prelas + ebrs + kread + kmath + ses + rural + female + hisp, data=df_match, weights=weights)
 
-psmatch2 <- lm(math12 ~ catholic + math8 + inc8 + inc8sq + mathfam, data=df_match, weights=weights)
-#Notice how we have matched on just math8 and inc8 but are now adjusting for more
-#in our estimation. This is fine!
-summary(psmatch2)
+summary(psmatch)
 
 # Estimate confidence intervals
-confint(psmatch2)
-
-# Can estimate this without additional controls or with full model match
-psmatch1 <- lm(math12 ~ catholic + math8 + inc8, data=df_match, weights=weights)
-psmatch3 <- lm(math12 ~ catholic + math8 + inc8 + inc8sq + mathfam, data=df_match2, weights = weights)
+confint(psmatch)
 ```
 
 **B2.** Construct a Coarsened Exact Matching (CEM) algorithm similar to Umansky and Dumont (see Class 8 Lecture) that relies on the following matching variables: (1) prelas, (2) ebrs, (3) kmath, (4) kread, (5) ses, (6) rural, (7) female and (8) hisp. Variables 1-5 are continuous. You should decide whether you will follow Umansky and Dumont’s choices for cutpoints or select other reasonable cutpoint values. Variables 6-8 are dichotomous and you should insist on exact matches for these categories. Write 1-2 paragraphs describing the identification strategy (remember this is different from your estimation strategy), its accompanying assumptions, your matching procedures and the resulting number of excluded sample members.
