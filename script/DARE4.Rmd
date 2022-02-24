@@ -2,7 +2,9 @@
 title: "DARE4"
 author: "Anwesha Guha, Merly Klaas, & Thuy Nguyen"
 date: "2/22/2022"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -56,17 +58,63 @@ summary(table, labelTranslations = mylabels)
 **B1.** Develop a formal model (an equation) that describes the probability that a student who lives in a home where a language other than En- glish is predominantly spoken will be identified as an EL. Start with a basic model that defines EL-classification as a function of PreLAS score, EBRS score, Math/reading scores, SES, Rurality, Gender and Ethnicity (Hispanic/Latinx or not). From this starting probability, present a visual describing the region of common support for EL- and non-EL-classified students. Describe the substantive implications to your analytic strategy of this figure in 2-3 sentences.
 
 ```{r}
+pscores <-  feglm(elprgm ~ prelas + ebrs + kread + kmath + ses + rural + female + hisp, family = c("logit"), data = dat)
 
+summary(pscores)
+
+# 2. Estimate fitted probability of selection into treatment for each individual
+pscore_df <- data.frame(p_score = predict(pscores, type = "response"),elprgm = dat$elprgm)
+
+# 3. Examine common support
+
+ggplot(pscore_df, aes(p_score,fill = as.factor(elprgm), color = as.factor(elprgm))) + 
+  geom_density(alpha=0.1) + 
+  theme_pander(base_size = 12) + 
+  xlab("Probability of being clasified as EL")
 ```
 
 **B2.** Construct a Coarsened Exact Matching (CEM) algorithm similar to Umansky and Dumont (see Class 8 Lecture) that relies on the following matching variables: (1) prelas, (2) ebrs, (3) kmath, (4) kread, (5) ses, (6) rural, (7) female and (8) hisp. Variables 1-5 are continuous. You should decide whether you will follow Umansky and Dumont’s choices for cutpoints or select other reasonable cutpoint values. Vari- ables 6-8 are dichomotous and you should insist on exact matches for these categories. Write 1-2 paragraphs describing the identification strategy (remember this is different from your estimation strategy), its accompanying assumptions, your matching procedures and the re- sulting number of excluded sample members.
 
 ```{r}
 
-```
+#Phase II.            
 
+# 1. Generate matches
+
+matched <- matchit(elprgm ~ prelas + ebrs + kmath + kread + ses + rural + female + hisp, 
+                   method="nearest", 
+                   replace=T, 
+                   discard="both", 
+                   data=dat)
+
+# Create dataframe from matched data
+df_match <- match.data(matched)
+
+# Dimensions of dataframe
+dim(df_match)
+
+## 2. Examine common support (post-match)
+
+ggplot(df_match, aes(distance,fill = as.factor(elprgm), color = as.factor(elprgm))) + 
+        geom_density(alpha=0.1) + 
+        theme_pander(base_size = 16) + 
+        xlab("Probability of Being Classified as English Learner")
+
+## 3. Examine quality of matches, descriptively
+summary(matched)
+
+```
 **B3.** Assess the quality of your matches by looking at the region of common support in your newly matched sample. Assess the quality of your matches by comparing baseline variable values in the treated and non- treated conditions. Provide a summary assessment of the quality of your matches, the extent to which you have accomplished balance, and the impact your matching has had on your sample as it relates to both variance and generalizability. Do you think you should try different matching criteria to achieve a better result? Why or why not (it is not necessary at this point to actually conduct multiple re-matching procedures, just assess whether they would be valuable)?
 ```{r}
+## 2. Examine common support (post-match)
+
+ggplot(df_match, aes(distance,fill = as.factor(elprgm), color = as.factor(elprgm))) + 
+        geom_density(alpha=0.1) + 
+        theme_pander(base_size = 16) + 
+        xlab("Probability of Being Classified as English Learner")
+
+## 3. Examine quality of matches, descriptively
+summary(matched)
 
 ```
 
@@ -74,7 +122,18 @@ summary(table, labelTranslations = mylabels)
 
 ```{r}
 
+
+psmatch1 <- lm(tlangk ~ elprgm + prelas + ebrs + kmath + kread + ses + rural + female + hisp, data=df_match, weights=weights)
+psmatch2 <- lm(tmathk ~ elprgm + prelas + ebrs + kmath + kread + ses + rural + female + hisp, data=df_match, weights=weights)
+
+summary(psmatch1)
+summary(psmatch2)
+
+# Estimate confidence intervals
+confint(psmatch1)
+confint(psmatch2)
 ```
+
 
 **B5.** (OPTIONAL) Conduct a robustness check by estimating the causal effect of EL classification on teacher perceptions of student skills by using a propensity score matching approach (or another approach from the matching family if you choose). Share information on the quality of these matches and any additional assumptions associated with this approach. Present these results alongside your results in B4 in an accompanying table(s) and write-up as you would report these in an academic paper in 2-3 paragraphs.
 
