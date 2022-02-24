@@ -131,22 +131,43 @@ summary(psmatch)
 confint(psmatch)
 ```
 
-**B2.** Construct a Coarsened Exact Matching (CEM) algorithm similar to Umansky and Dumont (see Class 8 Lecture) that relies on the following matching variables: (1) prelas, (2) ebrs, (3) kmath, (4) kread, (5) ses, (6) rural, (7) female and (8) hisp. Variables 1-5 are continuous. You should decide whether you will follow Umansky and Dumont’s choices for cutpoints or select other reasonable cutpoint values. Variables 6-8 are dichotomous and you should insist on exact matches for these categories. Write 1-2 paragraphs describing the identification strategy (remember this is different from your estimation strategy), its accompanying assumptions, your matching procedures and the resulting number of excluded sample members.
+**B2.** Construct a Coarsened Exact Matching (CEM) algorithm similar to Umansky and Dumont (see Class 8 Lecture) that relies on the follow- ing matching variables: (1) prelas, (2) ebrs, (3) ses, (4) rural, (5) female and (6) hisp. Variables 1-3 are continuous. You should decide whether you will follow Umansky and Dumont’s choices for cutpoints or select other reasonable cutpoint values. Variables 4-6 are dichomo- tous and you should insist on exact matches for these categories. Write 1-2 paragraphs describing the identification strategy (remember this is different from your estimation strategy), its accompanying assump- tions, your matching procedures and the resulting number of excluded sample members.
 
 ```{r}
-matched <- matchit(elprgm ~ prelas + ebrs + ses + rural + female + hisp, method="nearest", replace=T, 
-                   discard="both", data=dat)
+
+#Coarsened Exact Matching
+#Step 1. Define coarsened bins of covariates within which to match
+# Create coarsened forPreLAS variable
+prelas_quints <- quantcut(dat$prelas, 5)
+table(prelas_quints)
+#Create coarsened for EBRS
+ebrs_quints <- quantcut(dat$ebrs, 5)
+table(ebrs_quints)
+
+#Cutpoint halve for executive function
+summary(dat$kexecfunc1) #median = 15
+#Create coarsened for SES 
+
+ses_quints <- quantcut(dat$ses, 5)
+table(ses_quints)
+
+ 
+cem <- matchit(elprgm ~ prelas_quints + ebrs_quints + ses_quints + kexecfunc1 + rural + female + hisp, method="cem",
+               cutpoints = list(kexecfunc1 = 15),
+               data=dat)
+
 # Create dataframe from matched data
-df_match <- match.data(matched)
+df_cem <- match.data(cem)
+
 # Dimensions of dataframe
-dim(df_match)
-ggplot(df_match, aes(distance, fill = as.factor(elprgm), color = as.factor(elprgm))) + 
-        geom_density(alpha=0.1) + 
-        theme_pander(base_size = 16) + 
-        xlab("Probability of elprgm")
-## 3. Examine quality of matches, descriptively
-summary(matched)
+dim(df_cem)
+table(df_cem$elprgm)
+
+summary(cem)
+
 ```
+
+
 
 **B3.** Assess the quality of your matches by looking at the region of common support in your newly matched sample. Assess the quality of your matches by comparing baseline variable values in the treated and non- treated conditions. Provide a summary assessment of the quality of your matches, the extent to which you have accomplished balance, and the impact your matching has had on your sample as it relates to both variance and generalizability. Do you think you should try different matching criteria to achieve a better result? Why or why not (it is not necessary at this point to actually conduct multiple re-matching procedures, just assess whether they would be valuable)?
 ```{r}
