@@ -160,7 +160,7 @@ confint(psmatch_lang)
 confint(psmatch_math)
 
 ```
-In a matched sample of students who had nearly identical language proficiency scores, executive functioning score, rurality, Gender and Ethnicity (Hispanic/Latinx or not) and were equally likely to be labelled as EL on these observable conditions, the effect of being classified as EL was to **decrease** teacher perception of student's language skills scores by 0.065 scale score points [95% CI: -0.16, 0.03] and to **decrease** teacher perception of student's math skills scores by 0.035 scale score points [95% CI: -0.13, 0.06]. To the extent that students' classification as English Learner is based entirely on their English proficiency scores, executive functioning score, Rurality, Gender and Ethnicity (Hispanic/Latinx or not), we can interpret this a credibly causal estimate of the effect of EL status on teacher perception of students' academic skills among Multilingual Students, purged of observable variable bias.
+In a matched sample of students who had nearly identical language proficiency scores, executive functioning score, rurality, Gender and Ethnicity (Hispanic/Latinx or not) and were equally likely to be labelled as EL on these observable conditions, the effect of being classified as EL to **decrease** teacher perception of student's language skills scores by 0.065 scale score points [95% CI: -0.16, 0.03] and not significantly to **decrease** teacher perception of student's math skills scores by 0.035 scale score points [95% CI: -0.13, 0.06]. However, both of these effects are **not statistically significant**. To the extent that students' classification as English Learner is based entirely on these characteristics, we can interpret this a credibly causal estimate of the effect of EL status on teacher perception of students' academic skills among Multilingual Students, purged of observable variable bias.
 
 **B2.** Construct a Coarsened Exact Matching (CEM) algorithm similar to Umansky and Dumont (see Class 8 Lecture) that relies on the following matching variables: (1) prelas, (2) ebrs, (3) ses, (4) rural, (5) female and (6) hisp. Variables 1-3 are continuous. You should decide whether you will follow Umansky and Dumont’s choices for cutpoints or select other reasonable cutpoint values. Variables 4-6 are dichomotous and you should insist on exact matches for these categories. Write 1-2 paragraphs describing the identification strategy (remember this is different from your estimation strategy), its accompanying assumptions, your matching procedures and the resulting number of excluded sample members.
 
@@ -193,10 +193,12 @@ table(df_cem$elprgm)
 
 summary(cem)
 ```
+In this analysis, we decided to utilize Coarsened exact matching (CEM) strategy to reduce observed variable bias by removing from the sample and subsequent estimation any individuals in EL group who cannot be matched with individuals in the non EL group. Further, for each observed variable, we chose number of bins based on prior knowledge about our data and match our sample within each bin. Following Umansky and Dumont’s strategy, we binned PreLAS, EBRS and SES into quintiles, executive function score into halves, and forced exact match for rurality, gender and ethnicity (Hispanic or Not). Matching by quintiles has been shown to eliminate more than 90% of bias (Umansky & Dumont, 2021). We dropped 43 more sample of nearest-neighbor matched sample, and in total we dropped 520 sample from pre-matched sample. 
 
 
 
 **B3.** Assess the quality of your matches by looking at the region of common support in your newly matched sample. Assess the quality of your matches by comparing baseline variable values in the treated and non- treated conditions. Provide a summary assessment of the quality of your matches, the extent to which you have accomplished balance, and the impact your matching has had on your sample as it relates to both variance and generalizability. Do you think you should try different matching criteria to achieve a better result? Why or why not (it is not necessary at this point to actually conduct multiple re-matching procedures, just assess whether they would be valuable)?
+
 ```{r}
 
 # Plot common support
@@ -225,6 +227,7 @@ att2 <- lm(tmathk ~ elprgm + prelas + ebrs + ses + kexecfunc1 + rural + female +
 summary(att1)
 summary(att2)
 ```
+We further implement *Coarsened Exact Matching* to compare student with EL status and non EL status within more restricted similarity of characteristics (region of common support) to avoid estimation bias. Although the effect of EL status on teacher perception of students kindergarten academic skill is still not significant, the downwardly biased perceptions of their students' abilities as a direct result of EL label were overstated in the propensity score matching (nearest-neighbor) sample. Using CEM, we found a 0.056 scale point decreased on teacher perception id EL students' language score and a 0.014 scale point decreased on teacher perception  of EL students' math score.
 
 
 **B5.** (OPTIONAL) Conduct a robustness check by estimating the causal effect of EL classification on teacher perceptions of student skills by using a propensity score matching approach (or another approach from the matching family if you choose). Share information on the quality of these matches and any additional assumptions associated with this approach. Present these results alongside your results in B4 in an accompanying table(s) and write-up as you would report these in an academic paper in 2-3 paragraphs.
