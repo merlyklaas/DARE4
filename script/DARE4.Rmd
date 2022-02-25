@@ -36,35 +36,46 @@ dat <- import(here("data","dumont_umansky_ECLSK.dta"))
 
 **A1** Present graphical and/or numerical evidence on whether teachers perceive students who are classified as ELs as having weaker language and mathematics skills in this data set. Describe the results of your assessment in 3-4 sentences. Should the evidence you have shared here be interpreted as a plausibly causal estimate of the effect of being classified as an EL student on teachers’ perceptions of students’ ability? In 1-2 sentences, answer why or why not.
 
-
 ```{r}
-perception_diff <- dat %>% group_by(elprgm) %>% 
+perception_diff <- dat %>% 
+  group_by(elprgm) %>% 
   summarise(n_students = n(), 
             mean_math=mean(tmathk), 
             se_math = sd(tmathk)/sqrt(n_students),
             mean_lang = mean(tlangk), 
             se_lang = sd(tlangk)/sqrt(n_students))
+```
 
+```{r}
 ggplot(perception_diff, 
-       aes(x=as.factor(elprgm), y=mean_math, ymin=mean_math-se_math, ymax=mean_math+se_math)) + geom_col(fill = "darkgreen", alpha=0.4) + 
+       aes(x=as.factor(elprgm), y=mean_math, ymin=mean_math-se_math, ymax=mean_math+se_math)) + 
+  geom_col(fill = "darkgreen", alpha=0.4) + 
   geom_linerange() + 
   theme_pander(base_size = 16) +
-  xlab("ELL Program Participation") + scale_y_continuous("Teacher perceptions of student's\n kinder math skills")
+  labs(x = "ELL Program Participation",
+       y = "Difference in perception from mean",
+       title = "Teacher perception of student's kindergarten Math skills") +
+  theme_minimal()
 ```
 
 ```{r}
 ggplot(perception_diff,
-       aes(x=as.factor(elprgm), y=mean_lang, ymin=mean_lang-se_lang, ymax=mean_lang+se_lang)) + geom_col(fill = "blue", alpha=0.4) + 
+       aes(x=as.factor(elprgm), y=mean_lang, ymin=mean_lang-se_lang, ymax=mean_lang+se_lang)) + 
+  geom_col(fill = "blue", alpha=0.4) + 
   geom_linerange() + 
   theme_pander(base_size = 16) +
-  xlab("ELL Program Participation") + 
-  scale_y_continuous("Teacher perceptions of student's kinder\n language skills")
+  labs(x = "ELL Program Participation",
+       y = "Difference in perception from mean",
+       title = "Teacher perception of student's kindergarten Language skills") +
+  theme_minimal()
 ```
+
+For both language and math skills, teachers perceived multilingual students who participate in the ELL program as having lower ability. However, this should not be interpreted as causal; the causal inference assumptions are not met.
 
 **A2** Are there other ways in which students classified as EL learners are different from other students who live in homes where a language other than English is predominantly spoken, but are not classified as ELs? Present a table with quantitative information summarizing this fact and describe how this motivates your analytic strategy in Section B in 3-4 sentences.
 
 ```{r}
-table_diff <- tableby(elprgm ~ hisp + ses + chrabsk + prelas + ebrs + female + rural, 
+table_diff <- tableby(elprgm ~ hisp + ses + chrabsk + female + rural + ebrs + prelas, 
                  numeric.stats= c("meansd"), cat.stats=c("N", "countpct"), digits=2, data=dat)
 
 summary(table_diff)
@@ -73,6 +84,8 @@ summary(table_diff)
 # match based on these other covariates and to be able to parse the differences in perception
 # otherwise students are inherently different and cannot be compared without matching based on ability 
 ```
+
+Students participating in the EL program differed significantly on the quantitative characteristics of prop. Hispanic/Latinx, socioeconomic status, prop. rural, and on executive functioning score. Because of these significant differences, we will match based on these covariates. We will also match based on the executive functioning assessment, as suggested by Umansky & Dumont. There is no significant difference between those who are chronically absent and by gender.
 
 
 ### B. Replication and Extension (7 points)
