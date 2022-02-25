@@ -75,7 +75,7 @@ For both language and math skills, teachers perceived multilingual students who 
 **A2** Are there other ways in which students classified as EL learners are different from other students who live in homes where a language other than English is predominantly spoken, but are not classified as ELs? Present a table with quantitative information summarizing this fact and describe how this motivates your analytic strategy in Section B in 3-4 sentences.
 
 ```{r}
-table_diff <- tableby(elprgm ~ hisp + ses + chrabsk + female + rural + ebrs + prelas, 
+table_diff <- tableby(elprgm ~ hisp + ses + chrabsk + kexecfunc1 + female + rural + ebrs + prelas, 
                  numeric.stats= c("meansd"), cat.stats=c("N", "countpct"), digits=2, data=dat)
 
 summary(table_diff)
@@ -92,11 +92,11 @@ Students participating in the EL program differed significantly on the quantitat
 *For the following tasks, give your best attempt at completing the analysis. If you are unable to conduct the programming or analysis, describe what you are attempting to do and what your results would mean.*
 
 
-**B1.** Develop a formal model (an equation) that describes the probability that a student who lives in a home where a language other than English is predominantly spoken will be identified as an EL. Start with a basic model that defines EL-classification as a function of PreLAS score, EBRS score, Math/reading scores, SES, Rurality, Gender and Ethnicity (Hispanic/Latinx or not). From this starting probability, present a visual describing the region of common support for EL- and non-EL-classified students. Describe the substantive implications to your analytic strategy of this figure in 2-3 sentences.
+**B1.** Develop a formal model (an equation) that describes the probability that a student who lives in a home where a language other than English is predominantly spoken will be identified as an EL. Start with a basic model that defines EL-classification as a function of PreLAS score, EBRS score, SES, Rurality, Gender and Ethnicity (Hispanic/Latinx or not). From this starting probability, present a visual describing the region of common support for EL- and non-EL-classified students. Describe the substantive implications to your analytic strategy of this figure in 2-3 sentences.
 
 ```{r}
 # 1. Fit logistic selection model estimating probability of participating in program, given covariates
-pscores <- feglm(elprgm ~ prelas + ebrs + kread + kmath + ses + rural + female + hisp, family=c("logit"), data=dat)
+pscores <- feglm(elprgm ~ prelas + ebrs + ses + kexecfunc1 + rural + female + hisp, family=c("logit"), data=dat)
 summary(pscores)
 
 # 2. Estimate fitted probability of selection into treatment for each individual
@@ -114,7 +114,7 @@ ggplot(pscore_df, aes(p_score,fill = as.factor(elprgm), color = as.factor(elprgm
 
 ```{r}
 # 1. Generate matches
-matched <- matchit(elprgm ~ prelas + ebrs + kread + kmath + ses + rural + female + hisp, method="nearest", replace=T, 
+matched <- matchit(elprgm ~ prelas + ebrs + kexecfunc1 + ses + rural + female + hisp, method="nearest", replace=T, 
                    discard="both", data=dat)
 
 # Create dataframe from matched data
@@ -136,15 +136,30 @@ summary(matched) # see slide 29 to interpret quality of matches
 Extra exploration to estimate treatment effects:
 ```{r}
 ## 4. Once happy with matches, estimate treatment effect in matched sample
-psmatch <- lm(elprgm ~ prelas + ebrs + kread + kmath + ses + rural + female + hisp, data=df_match, weights=weights)
 
-summary(psmatch)
+#Estimate of EL status on Teacher perception of students' language skills using nearest neighbor matching
+psmatch_lang <- lm(tlangk ~ elprgm + prelas + ebrs + kexecfunc1+ ses+ rural + female + hisp,
+              data=df_match, 
+              weights=weights)
 
+#Estimate of EL status on Teacher perception of students' math skills using nearest neighbor matching
+
+psmatch_math <- lm(tmathk ~ elprgm + prelas + ebrs + kexecfunc1 + ses + rural + female + hisp,
+              data=df_match, 
+              weights=weights)
+
+
+summary(psmatch_lang)
+summary(psmatch_math)
 # Estimate confidence intervals
-confint(psmatch)
-```
+confint(psmatch_lang)
+confint(psmatch_math)
 
-**B2.** Construct a Coarsened Exact Matching (CEM) algorithm similar to Umansky and Dumont (see Class 8 Lecture) that relies on the follow- ing matching variables: (1) prelas, (2) ebrs, (3) ses, (4) rural, (5) female and (6) hisp. Variables 1-3 are continuous. You should decide whether you will follow Umansky and Dumont’s choices for cutpoints or select other reasonable cutpoint values. Variables 4-6 are dichomo- tous and you should insist on exact matches for these categories. Write 1-2 paragraphs describing the identification strategy (remember this is different from your estimation strategy), its accompanying assumptions, your matching procedures and the resulting number of excluded sample members.
+```
+In a matched sample of students who had nearly identical language proficiency scores, executive functioning score, rurality, Gender and Ethnicity (Hispanic/Latinx or not) and were equally likely to be labelled as EL on these observable conditions, the effect of being classified as EL was to **decrease** teacher perception of student's language skills scores by 0.065 scale score points [95% CI: -0.16, 0.03] and to **decrease** teacher perception of student's math skills scores by 0.035 scale score points [95% CI: -0.13, 0.06]. To the extent that students' classification as English Learner is based entirely on their English proficiency scores, executive functioning score, Rurality, Gender and Ethnicity (Hispanic/Latinx or not), we can interpret this a credibly causal estimate of the effect of EL status on teacher perception of students' academic skills among Multilingual Students, purged of observable variable bias.
+
+
+**B2.** Construct a Coarsened Exact Matching (CEM) algorithm similar to Umansky and Dumont (see Class 8 Lecture) that relies on the following matching variables: (1) prelas, (2) ebrs, (3) ses, (4) rural, (5) female and (6) hisp. Variables 1-3 are continuous. You should decide whether you will follow Umansky and Dumont’s choices for cutpoints or select other reasonable cutpoint values. Variables 4-6 are dichomotous and you should insist on exact matches for these categories. Write 1-2 paragraphs describing the identification strategy (remember this is different from your estimation strategy), its accompanying assumptions, your matching procedures and the resulting number of excluded sample members.
 
 ```{r}
 
@@ -158,15 +173,13 @@ table(prelas_quints)
 ebrs_quints <- quantcut(dat$ebrs, 5)
 table(ebrs_quints)
 
-# Median Cut-point for executive function
-summary(dat$kexecfunc1) #median = 15
-
 #Create coarsened for SES 
 ses_quints <- quantcut(dat$ses, 5)
 table(ses_quints)
 
  
-cem <- matchit(elprgm ~ prelas_quints + ebrs_quints + ses_quints + rural + female + hisp, method="cem",
+cem <- matchit(elprgm ~ prelas_quints + ebrs_quints + ses_quints + rural + female + hisp, 
+               method="cem",
                data=dat)
 
 # Create dataframe from matched data
@@ -177,7 +190,6 @@ dim(df_cem)
 table(df_cem$elprgm)
 
 summary(cem)
-
 ```
 
 
@@ -202,10 +214,10 @@ ggplot(df_cem2, aes(subclass,elclassified, color = as.factor(elprgm))) +
 **B4.** Using your newly matched sample, estimate the average treatment effect of EL classification on teachers’ perceptions of students’ math and language ability in your newly matched sample. If you decide to do B5, present these results and associated discussion along with the rest of your results in B5. If you do not, answer the rest of the prompt with just the CEM results. Present your CEM results and compare them to your results in A1 in a table and an accompanying write-up as you would report these in an academic paper in 1-2 paragraphs.
 
 ```{r}
-#estimation for teacher perception on language skills
+#Estimate of EL status on Teacher perception of students' language skills
 att1 <- lm(tlangk ~ elprgm + prelas + ebrs+ ses+ kexecfunc1 + rural + female + hisp, data=df_cem, weights = weights)
 
-#estimation for teacher perception on math skills
+#Estimate of EL status on Teacher perception of students' math skills
 att2 <- lm(tmathk ~ elprgm + prelas + ebrs + ses + kexecfunc1 + rural + female + hisp, data=df_cem, weights = weights)
 
 summary(att1)
