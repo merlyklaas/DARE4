@@ -187,6 +187,12 @@ cem <- matchit(elprgm ~ prelas_quints + ebrs_quints + ses_quints + rural + femal
 # Create dataframe from matched data
 df_cem <- match.data(cem)
 
+
+ggplot(df_cem, aes(distance,fill = as.factor(elprgm), color = as.factor(elprgm))) + 
+        geom_density(alpha=0.1) + 
+        theme_pander(base_size = 16) + 
+        xlab("Prop. of EL Program Participation")
+
 # Dimensions of dataframe
 dim(df_cem)
 table(df_cem$elprgm)
@@ -199,7 +205,7 @@ In this analysis, we decided to utilize Coarsened exact matching (CEM) strategy 
 
 **B3.** Assess the quality of your matches by looking at the region of common support in your newly matched sample. Assess the quality of your matches by comparing baseline variable values in the treated and non- treated conditions. Provide a summary assessment of the quality of your matches, the extent to which you have accomplished balance, and the impact your matching has had on your sample as it relates to both variance and generalizability. Do you think you should try different matching criteria to achieve a better result? Why or why not (it is not necessary at this point to actually conduct multiple re-matching procedures, just assess whether they would be valuable)?
 
-```{r}
+```{r fig.height=8, fig.width=30}
 
 # Plot common support
 df_cem2 <- df_cem %>% group_by(elprgm, subclass) %>% 
@@ -207,11 +213,13 @@ df_cem2 <- df_cem %>% group_by(elprgm, subclass) %>%
 df_cem2 <- df_cem2 %>%  mutate(elclassified = count / sum(count))
 
 # Examine quality of matches for each variable grouping
-ggplot(df_cem2, aes(subclass,elclassified, color = as.factor(elprgm))) + 
+p <- ggplot(df_cem2, aes(subclass,elclassified, color = as.factor(elprgm))) + 
           geom_col(alpha=0.1, position = position_dodge()) + 
           theme_pander(base_size = 10) + 
           xlab("Subclassification groups by English Test, Localities, Sex, and Racial background")+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+ggsave("p.pdf", width = 30, height = 8, units= "in")
 
 ```
 
