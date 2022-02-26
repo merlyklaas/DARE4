@@ -153,8 +153,6 @@ summary(matched) # see slide 29 to interpret quality of matches
 In the summary of balance, we see that the standard mean difference decreases for the the matched data.
 
 ```{r}
-## 4. Once happy with matches, estimate treatment effect in matched sample
-
 #Estimate of EL status on Teacher perception of students' language skills using nearest neighbor matching
 psmatch_lang <- lm(tlangk ~ elprgm + prelas + ebrs + kexecfunc1+ ses+ rural + female + hisp,
               data=df_match, 
@@ -227,9 +225,27 @@ p <- ggplot(df_cem2, aes(subclass,elclassified, color = as.factor(elprgm))) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 p
 
-ggsave("p.pdf", width = 30, height = 8, units= "in")
+#ggsave("p.pdf", width = 30, height = 8, units= "in")
 
 ```
+
+```{r}
+pscores2 <- feglm(elprgm ~ prelas + ebrs + ses + rural + female + hisp,
+family=c("logit"),
+weights = df_cem$weights,
+data=df_cem)
+
+df2 <- data.frame(p_scores=predict(pscores2, type="response"),
+EL = df_cem$elprgm)
+
+ggplot(df2, aes(p_scores,fill = as.factor(EL), color = as.factor(EL))) + 
+  geom_density(alpha=0.1) + 
+  theme_pander(base_size = 12) + 
+  xlab("")
+```
+
+
+
 \newpage
 **B4.** Using your newly matched sample, estimate the average treatment effect of EL classification on teachers’ perceptions of students’ math and language ability in your newly matched sample. If you decide to do B5, present these results and associated discussion along with the rest of your results in B5. If you do not, answer the rest of the prompt with just the CEM results. Present your CEM results and compare them to your results in A1 in a table and an accompanying write-up as you would report these in an academic paper in 1-2 paragraphs.
 
