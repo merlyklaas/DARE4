@@ -106,9 +106,9 @@ Students participating in the EL program differed significantly on the quantitat
 
 For our analysis, we will use the following model:
 
-$$elprgm = PreLAS + EBRS + kmath + kreading + SES + rural + female + hisp$$
+$$elprgm = PreLAS + EBRS + kexecfunc1 + SES + rural + female + hisp$$
 
-where $elprgm$ is student participation in the EL program, $PreLAS$ and $EBRS$ are student's total scores from those two tests, $kmath$ is kindergarten math test score, $kread$ is kindergarten reading test score, $rural$ is student attending school in a rural area, $female$ is student identifying as female, and $hisp$ is student identifying as Hispanic/Latinx.
+where $elprgm$ is student participation in the EL program, $PreLAS$ and $EBRS$ are student's total scores from those two tests, $kexecfunc1$ is kindergarten executive function score, $rural$ is student attending school in a rural area, $female$ is student identifying as female, and $hisp$ is student identifying as Hispanic/Latinx.
 
 ```{r}
 # 1. Fit logistic selection model estimating probability of participating in program, given covariates
@@ -172,7 +172,7 @@ confint(psmatch_lang)
 confint(psmatch_math)
 
 ```
-In a matched sample of students who had nearly identical language proficiency scores, executive functioning score, rurality, Gender and Ethnicity (Hispanic/Latinx or not) and were equally likely to be labelled as EL on these observable conditions, the effect of being classified as EL to **decrease** teacher perception of student's language skills scores by 0.065 scale score points [95% CI: -0.16, 0.03] and not significantly to **decrease** teacher perception of student's math skills scores by 0.035 scale score points [95% CI: -0.13, 0.06]. However, both of these effects are **not statistically significant**. To the extent that students' classification as English Learner is based entirely on these characteristics, we can interpret this a credibly causal estimate of the effect of EL status on teacher perception of students' academic skills among Multilingual Students, purged of observable variable bias.
+In a matched sample of students who had nearly identical language proficiency scores, executive functioning score, rurality, Gender and Ethnicity (Hispanic/Latinx or not) and were equally likely to be labelled as EL on these observable conditions, the effect of being classified as EL to **decrease** teacher perception of student's language skills scores by 0.065 scale score points [95% CI: -0.16, 0.03] and to **decrease** teacher perception of student's math skills scores by 0.035 scale score points [95% CI: -0.13, 0.06]. However, both of these effects are **not statistically significant**. To the extent that students' classification as English Learner is based entirely on these characteristics, we can interpret this a credibly causal estimate of the effect of EL status on teacher perception of students' academic skills among Multilingual Students, purged of observable variable bias.
 
 **B2.** Construct a Coarsened Exact Matching (CEM) algorithm similar to Umansky and Dumont (see Class 8 Lecture) that relies on the following matching variables: (1) prelas, (2) ebrs, (3) ses, (4) rural, (5) female and (6) hisp. Variables 1-3 are continuous. You should decide whether you will follow Umansky and Dumont’s choices for cutpoints or select other reasonable cutpoint values. Variables 4-6 are dichomotous and you should insist on exact matches for these categories. Write 1-2 paragraphs describing the identification strategy (remember this is different from your estimation strategy), its accompanying assumptions, your matching procedures and the resulting number of excluded sample members.
 
@@ -187,12 +187,16 @@ table(prelas_quints)
 ebrs_quints <- quantcut(dat$ebrs, 5)
 table(ebrs_quints)
 
+#Create bins for kexecfunc1 - median 15
+summary(dat$kexecfunc1)
+
 #Create coarsened for SES 
 ses_quints <- quantcut(dat$ses, 5)
 table(ses_quints)
 
  
-cem <- matchit(elprgm ~ prelas_quints + ebrs_quints + ses_quints + rural + female + hisp, 
+cem <- matchit(elprgm ~ prelas_quints + ebrs_quints + ses_quints + kexecfunc1 + rural + female + hisp,
+               cutpoints = list(kexecfunc1 = 15),
                method="cem",
                data=dat)
 
@@ -201,9 +205,9 @@ df_cem <- match.data(cem)
 # Dimensions of dataframe
 dim(df_cem)
 table(df_cem$elprgm)
-
+summary(cem)
 ```
-In this analysis, we decided to utilize Coarsened exact matching (CEM) strategy to reduce observed variable bias by removing from the sample and subsequent estimation any individuals in EL group who cannot be matched with individuals in the non EL group. Further, for each observed variable, we chose number of bins based on prior knowledge about our data and match our sample within each bin. Following Umansky and Dumont’s strategy, we binned PreLAS, EBRS and SES into quintiles, executive function score into halves, and forced exact match for rurality, gender and ethnicity (Hispanic or Not). Matching by quintiles has been shown to eliminate more than 90% of bias (Umansky & Dumont, 2021). We dropped 43 more sample of nearest-neighbor matched sample, and in total we dropped 520 sample from pre-matched sample. 
+In this analysis, we decided to utilize Coarsened exact matching (CEM) strategy to reduce observed variable bias by removing from the sample and subsequent estimation any individuals in EL group who cannot be matched with individuals in the non EL group. Further, for each observed variable, we chose number of bins based on prior knowledge about our data and match our sample within each bin. Following Umansky and Dumont’s strategy, we binned PreLAS, EBRS and SES into quintiles, executive function score into halves, and forced exact match for rurality, gender and ethnicity (Hispanic or Not). Matching by quintiles has been shown to eliminate more than 90% of bias (Umansky & Dumont, 2021). Using this CEM procedure, we lost 572 sample from non EL group and 765 sample from EL group. In total, we excluded 1337 sample from our pre-matched dataset. 
 
 
 \newpage
@@ -214,11 +218,12 @@ cemresult <- summary(cem)
 
 df_cem_result <- data.frame(unlist(round(cemresult[[4]],3)))[,1:3] 
 
-df_cem_result %>% 
+table_cem <- df_cem_result %>% 
 tibble::rownames_to_column("Variable") %>% 
   rename("Means Treated" = Means.Treated, 
          "Means Control"= Means.Control,
          "Std.Mean Diff" = Std..Mean.Diff.)
+table_cem
 ```
 
 ```{r fig.height=8, fig.width=30}
@@ -241,7 +246,7 @@ p
 ```
 
 ```{r}
-pscores2 <- feglm(elprgm ~ prelas + ebrs + ses + rural + female + hisp,
+pscores2 <- feglm(elprgm ~ prelas + ebrs + kexecfunc1 + ses + rural + female + hisp,
 family=c("logit"),
 weights = df_cem$weights,
 data=df_cem)
@@ -301,11 +306,11 @@ modelsummary(mod2,
 
 
 ```
-*Table footnotes*
+*Table 2 footnotes*
 *Model 3-6 match on English proficiency & Executive functioning score, SES, Rurality, Gender, and Ethnicity. Model 5-6 use narrower bins. The english proficiency variables were matched by sample distribution quantile while the executive functioning measure was matched by sample distribution halves. All CEM and PSM estimates are double-robust.*
 
 
-We further implement *Coarsened Exact Matching* to compare student with EL status and non EL status within more restricted similarity of characteristics (region of common support) to avoid estimation bias. Although the effect of EL status on teacher perception of students kindergarten academic skill is still not significant, the downwardly biased perceptions of their students' abilities as a direct result of EL label were overstated in the propensity score matching (nearest-neighbor) sample. Using CEM, we found a 0.056 scale point decreased on teacher perception id EL students' language score and a 0.014 scale point decreased on teacher perception  of EL students' math score. 
+We further implement *Coarsened Exact Matching* to compare student with EL status and non EL status within more restricted similarity of characteristics (region of common support) to avoid estimation bias. Although the effect of EL status on teacher perception of students kindergarten academic skill is still not significant, the downwardly biased perceptions of their students' abilities as a direct result of EL label were understated in the propensity score matching (nearest-neighbor) sample. Using CEM, we found a 0.101 scale point decreased on teacher perception id EL students' language score and a 0.084 scale point decreased on teacher perception  of EL students' math score. 
 
 \newpage
 **B5.** (OPTIONAL) Conduct a robustness check by estimating the causal effect of EL classification on teacher perceptions of student skills by using a propensity score matching approach (or another approach from the matching family if you choose). Share information on the quality of these matches and any additional assumptions associated with this approach. Present these results alongside your results in B4 in an accompanying table(s) and write-up as you would report these in an academic paper in 2-3 paragraphs.
