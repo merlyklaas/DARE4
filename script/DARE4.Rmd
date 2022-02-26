@@ -210,9 +210,16 @@ In this analysis, we decided to utilize Coarsened exact matching (CEM) strategy 
 **B3.** Assess the quality of your matches by looking at the region of common support in your newly matched sample. Assess the quality of your matches by comparing baseline variable values in the treated and non- treated conditions. Provide a summary assessment of the quality of your matches, the extent to which you have accomplished balance, and the impact your matching has had on your sample as it relates to both variance and generalizability. Do you think you should try different matching criteria to achieve a better result? Why or why not (it is not necessary at this point to actually conduct multiple re-matching procedures, just assess whether they would be valuable)?
 
 ```{r}
-summary(cem)
-```
+cemresult <- summary(cem)
 
+df_cem_result <- data.frame(unlist(round(cemresult[[4]],3)))[,1:3] 
+
+df_cem_result %>% 
+tibble::rownames_to_column("Variable") %>% 
+  rename("Means Treated" = Means.Treated, 
+         "Means Control"= Means.Control,
+         "Std.Mean Diff" = Std..Mean.Diff.)
+```
 
 ```{r fig.height=8, fig.width=30}
 
