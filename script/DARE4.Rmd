@@ -3,8 +3,8 @@ title: "Umansky & Dumont (2021) Analysis  & Replication"
 author: "Anwesha Guha, Merly Klaas, & Thuy Nguyen"
 date: "2/22/2022"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
