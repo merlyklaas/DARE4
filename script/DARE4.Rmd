@@ -202,13 +202,17 @@ df_cem <- match.data(cem)
 dim(df_cem)
 table(df_cem$elprgm)
 
-summary(cem)
 ```
 In this analysis, we decided to utilize Coarsened exact matching (CEM) strategy to reduce observed variable bias by removing from the sample and subsequent estimation any individuals in EL group who cannot be matched with individuals in the non EL group. Further, for each observed variable, we chose number of bins based on prior knowledge about our data and match our sample within each bin. Following Umansky and Dumont’s strategy, we binned PreLAS, EBRS and SES into quintiles, executive function score into halves, and forced exact match for rurality, gender and ethnicity (Hispanic or Not). Matching by quintiles has been shown to eliminate more than 90% of bias (Umansky & Dumont, 2021). We dropped 43 more sample of nearest-neighbor matched sample, and in total we dropped 520 sample from pre-matched sample. 
 
 
 \newpage
 **B3.** Assess the quality of your matches by looking at the region of common support in your newly matched sample. Assess the quality of your matches by comparing baseline variable values in the treated and non- treated conditions. Provide a summary assessment of the quality of your matches, the extent to which you have accomplished balance, and the impact your matching has had on your sample as it relates to both variance and generalizability. Do you think you should try different matching criteria to achieve a better result? Why or why not (it is not necessary at this point to actually conduct multiple re-matching procedures, just assess whether they would be valuable)?
+
+```{r}
+summary(cem)
+```
+
 
 ```{r fig.height=8, fig.width=30}
 
@@ -241,9 +245,11 @@ EL = df_cem$elprgm)
 ggplot(df2, aes(p_scores,fill = as.factor(EL), color = as.factor(EL))) + 
   geom_density(alpha=0.1) + 
   theme_pander(base_size = 12) + 
-  xlab("")
+  xlab("Proportion of Students Classified as English Learner")
 ```
+In the summary of balance for matched data above, the `Std. Mean diff` are essentially zeros. This means we have forced control and treatment groups to be identical within bins (for continuous covariates) or exact (for binary covariates). The region of common support of the newly matched sample, as shown in the summary and the density plot above, covered 76% of the analytic sample (710+936)/(710+936+235+285)). The proportion of control/treatment in the matched sample is quite similar to the proportion in the pre-matched full sample. The matched sample has less students from rural, slightly lower proportion of female students in both control and treatment groups. However, compared to the full sample, the matched sample has a higher proportion of Hispanic students in treatment group and lower proportion in control group. Also, students in the matched sample generally have lower SES, and lower basesline scores of preLas and ebrs. 
 
+If we have better idea about the empirical cutoff points of SES, preLas, and ebrs for the US students at this age, we could try using that instead of using quintiles points to match. This could benefit us in terms of substantive meaning. 
 
 
 \newpage
