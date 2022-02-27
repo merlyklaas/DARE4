@@ -70,7 +70,9 @@ ggplot(perception_diff,
        y = "Difference in perception from mean",
        title = "Teacher perception of student's kindergarten Language skills") +
   theme_minimal()
+```
 
+```{r}
 #Naive ols estimation of the effect of EL status on teacher perception of students academic skills 
 #language skills
 
@@ -78,6 +80,8 @@ ggplot(perception_diff,
 ols_lang <- lm(tlangk ~ elprgm,
               data=dat)
 summary(ols_lang)
+
+
 #math skills
 ols_math <- lm(tmathk ~ elprgm,
               data=dat)
@@ -259,6 +263,7 @@ ggplot(df2, aes(p_scores,fill = as.factor(EL), color = as.factor(EL))) +
   theme_pander(base_size = 12) + 
   xlab("Proportion of Students Classified as English Learner")
 ```
+
 In the summary of balance for matched data above, the `Std. Mean diff` are essentially zeros. This means we have forced control and treatment groups to be identical within bins (for continuous covariates) or exact (for binary covariates). The region of common support of the newly matched sample, as shown in the summary and the density plot above, covered 76% of the analytic sample (710+936)/(710+936+235+285)). The proportion of control/treatment in the matched sample is quite similar to the proportion in the pre-matched full sample. The matched sample has less students from rural, slightly lower proportion of female students in both control and treatment groups. However, compared to the full sample, the matched sample has a higher proportion of Hispanic students in treatment group and lower proportion in control group. Also, students in the matched sample generally have lower SES, and lower basesline scores of preLas and ebrs. 
 
 If we have better idea about the empirical cutoff points of SES, preLas, and ebrs for the US students at this age, we could try using that instead of using quintiles points to match. This could benefit us in terms of substantive meaning. 
@@ -296,7 +301,7 @@ row2 <- tribble(~term,~'(1)',  ~'(2)', ~'(3)', ~'(4)', ~'(5)',~'(6)',
 attr(row2, 'position') <- c(1,2,3)
 
 modelsummary(mod2,
-             title = "Comparison of OLS, PSM and CEM estimates of Effect of EL Status on Teacher Perceptions of Students'academic Skills, Among Multilingual Students",
+             title = "Comparison of OLS, PSM and CEM estimates of Effect of EL Status on Teacher Perceptions of Students' Academic Skills, Among Multilingual Students",
              stars=c('*' = 0.05, '**' = 0.01, '***' = 0.001),
              coef_omit = "Int|prelas|ebrs|ses|kexecfunc1|rural|female|hisp",
              gof_omit= "Adj|Pseudo|Log|Within|AIC|BIC|FE|Std|R2|F|Int",
@@ -319,5 +324,9 @@ We further implement *Coarsened Exact Matching* to compare student with EL statu
 
 ```
 
-**B6.**Write a discussion paragraph in which you present the substantive conclusions (and limitations) of your results about the effects of EL classification on teacher perception of student skills in Kindergarten.
+**B6.** Write a discussion paragraph in which you present the substantive conclusions (and limitations) of your results about the effects of EL classification on teacher perception of student skills in Kindergarten.
+
+A naive estimate for both language and math skills suggest that kindergarten teachers perceive multilingual students who participate in the ELL program as having lower ability than students who do not participate in the EL program. However, the characteristics of students from either group were substantially different from each other, so a causal interpretation would be inappropriate. Specifically, in the EL group for example, there are higher proportion Hispanic/Latinx, come from lower socioeconomic status, and go to less rural schools. 
+
+We theorize that the primary driver of teacher perception of language and math skills is EL program participation. Conditional on this characteristic (in addition to test scores and demographic information), we implement two separate matching algorithms: Propensity Score Matching and Coarsened Exact Matching. Both sets of estimates indicate that the two populations are not significantly different from each other in regards to teacher perception.
 

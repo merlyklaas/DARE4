@@ -291,8 +291,3 @@ fit <- lm(math12 ~ subclass + subclass:catholic - 1, data = df_stratify2)
 summary(margins::margins(fit, variables = "catholic", 
                          data = df_stratify[df_stratify$catholic == 1,],
                          vcov = sandwich::vcovHC(fit)))
-
-
-
-
-```
