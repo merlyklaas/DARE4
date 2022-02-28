@@ -320,6 +320,8 @@ We further implement *Coarsened Exact Matching* to compare student with EL statu
 \newpage
 **B5.** (OPTIONAL) Conduct a robustness check by estimating the causal effect of EL classification on teacher perceptions of student skills by using a propensity score matching approach (or another approach from the matching family if you choose). Share information on the quality of these matches and any additional assumptions associated with this approach. Present these results alongside your results in B4 in an accompanying table(s) and write-up as you would report these in an academic paper in 2-3 paragraphs.
 
+
+**We use Propensity Score Matching (nearest neighbor) estimation in our analysis and present the results in table 2** 
 ```{r}
 
 ```
@@ -328,5 +330,5 @@ We further implement *Coarsened Exact Matching* to compare student with EL statu
 
 A naive estimate for both language and math skills suggest that kindergarten teachers perceive multilingual students who participate in the ELL program as having lower ability than students who do not participate in the EL program. However, the characteristics of students from either group were substantially different from each other, so a causal interpretation would be inappropriate. Specifically, in the EL group for example, there are higher proportion Hispanic/Latinx, come from lower socioeconomic status, and go to less rural schools. 
 
-We theorize that the primary driver of teacher perception of language and math skills is EL program participation. Conditional on this characteristic (in addition to test scores and demographic information), we implement two separate matching algorithms: Propensity Score Matching and Coarsened Exact Matching. Both sets of estimates indicate that the two populations are not significantly different from each other in regards to teacher perception.
+We theorize that the primary driver of teacher perception of language and math skills is EL program participation. Conditional on this characteristic (in addition to test scores and demographic information), we implement two separate matching algorithms: Propensity Score Matching and Coarsened Exact Matching. Both sets of estimates indicate that the two populations are not significantly different from each other in regards to teacher perception. Thus, as the result of using narrower bins, we considered small sample size as the limitation of this analysis. 
 
